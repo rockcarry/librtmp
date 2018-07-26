@@ -71,7 +71,7 @@ TLS_CTX RTMP_TLS_ctx;
 
 static const int packetSize[] = { 12, 8, 4, 1 };
 
-int RTMP_ctrlC;
+int RTMP_ctrlC = 0;
 
 const char RTMPProtocolStrings[][7] = {
     "RTMP",
@@ -877,6 +877,48 @@ finish:
     return ret;
 }
 
+static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrlen, int timeout)
+{
+    int len, ret, err;
+    u_long flag;
+
+    struct timeval tm;
+    fd_set rfds;
+    fd_set wfds;
+
+    flag = 1;
+    if (ioctlsocket(sock, FIONBIO, &flag) != 0) {
+        return -1;
+    }
+
+    ret = connect(sock, addr, addrlen);
+    if (ret == SOCKET_ERROR) {
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
+        FD_SET (sock, &rfds);
+        FD_SET (sock, &wfds);
+        tm.tv_sec  = timeout;
+        tm.tv_usec = 0;
+        ret = select(sock+1, &rfds, &wfds, 0, &tm);
+        if (ret > 0) {
+            len = sizeof(err);
+            getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&err, &len);
+            ret = err == 0 ? 0 : -1;
+        } else {
+            RTMP_Log(RTMP_LOGERROR, "%s, connect socket %s !",
+                __FUNCTION__, ret == 0 ? "timeout" : "error");
+            ret = -1;
+        }
+    }
+
+    flag = 0;
+    if (ioctlsocket(sock, FIONBIO, &flag) != 0) {
+        return -1;
+    }
+
+    return ret;
+}
+
 int
 RTMP_Connect0(RTMP *r, struct sockaddr * service)
 {
@@ -887,7 +929,7 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
 
     r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (r->m_sb.sb_socket != -1) {
-        if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
+        if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
             int err = GetSockError();
             RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
                 __FUNCTION__, err, strerror(err));

@@ -428,7 +428,7 @@ AMFProp_Encode(AMFObjectProperty *prop, char *pBuffer, char *pBufEnd)
 }
 
 #define AMF3_INTEGER_MAX    268435455
-#define AMF3_INTEGER_MIN    -268435456
+#define AMF3_INTEGER_MIN   -268435456
 
 int
 AMF3ReadInteger(const char *data, int32_t *valp)

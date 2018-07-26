@@ -36,11 +36,11 @@
 #define HMAC_finish(ctx, dig, dlen) dlen = SHA256_DIGEST_LENGTH; sha2_hmac_finish(&ctx, dig)
 
 typedef arc4_context *  RC4_handle;
-#define RC4_alloc(h)    *h = malloc(sizeof(arc4_context))
-#define RC4_setkey(h,l,k)   arc4_setup(h,k,l)
-#define RC4_encrypt(h,l,d)  arc4_crypt(h,l,(unsigned char *)d,(unsigned char *)d)
+#define RC4_alloc(h)           *h = malloc(sizeof(arc4_context))
+#define RC4_setkey(h,l,k)       arc4_setup(h,k,l)
+#define RC4_encrypt(h,l,d)      arc4_crypt(h,l,(unsigned char *)d,(unsigned char *)d)
 #define RC4_encrypt2(h,l,s,d)   arc4_crypt(h,l,(unsigned char *)s,(unsigned char *)d)
-#define RC4_free(h) free(h)
+#define RC4_free(h)             free(h)
 
 #elif defined(USE_GNUTLS)
 #include <nettle/hmac.h>
@@ -56,11 +56,11 @@ typedef arc4_context *  RC4_handle;
 #define HMAC_close(ctx)
 
 typedef struct arcfour_ctx* RC4_handle;
-#define RC4_alloc(h)    *h = malloc(sizeof(struct arcfour_ctx))
-#define RC4_setkey(h,l,k)   arcfour_set_key(h, l, k)
-#define RC4_encrypt(h,l,d)  arcfour_crypt(h,l,(uint8_t *)d,(uint8_t *)d)
+#define RC4_alloc(h)           *h = malloc(sizeof(struct arcfour_ctx))
+#define RC4_setkey(h,l,k)       arcfour_set_key(h, l, k)
+#define RC4_encrypt(h,l,d)      arcfour_crypt(h,l,(uint8_t *)d,(uint8_t *)d)
 #define RC4_encrypt2(h,l,s,d)   arcfour_crypt(h,l,(uint8_t *)d,(uint8_t *)s)
-#define RC4_free(h) free(h)
+#define RC4_free(h)             free(h)
 
 #else   /* USE_OPENSSL */
 #include <openssl/sha.h>
@@ -74,11 +74,11 @@ typedef struct arcfour_ctx* RC4_handle;
 #define HMAC_finish(ctx, dig, dlen) HMAC_Final(&ctx, dig, &dlen); HMAC_CTX_cleanup(&ctx)
 
 typedef RC4_KEY *   RC4_handle;
-#define RC4_alloc(h)    *h = malloc(sizeof(RC4_KEY))
-#define RC4_setkey(h,l,k)   RC4_set_key(h,l,k)
-#define RC4_encrypt(h,l,d)  RC4(h,l,(uint8_t *)d,(uint8_t *)d)
+#define RC4_alloc(h)           *h = malloc(sizeof(RC4_KEY))
+#define RC4_setkey(h,l,k)       RC4_set_key(h,l,k)
+#define RC4_encrypt(h,l,d)      RC4(h,l,(uint8_t *)d,(uint8_t *)d)
 #define RC4_encrypt2(h,l,s,d)   RC4(h,l,(uint8_t *)s,(uint8_t *)d)
-#define RC4_free(h) free(h)
+#define RC4_free(h)             free(h)
 #endif
 
 #define FP10
@@ -299,14 +299,14 @@ VerifyDigest(unsigned int digestPos, uint8_t *handshakeMessage, const uint8_t *k
 }
 
 /* handshake
-*
-* Type     = [1 bytes] plain: 0x03, encrypted: 0x06, 0x08, 0x09
-* -------------------------------------------------------------------- [1536 bytes]
-* Uptime   = [4 bytes] big endian unsigned number, uptime
-* Version  = [4 bytes] each byte represents a version number, e.g. 9.0.124.0
-* ...
-*
-*/
+ *
+ * Type     = [1 bytes] plain: 0x03, encrypted: 0x06, 0x08, 0x09
+ * -------------------------------------------------------------------- [1536 bytes]
+ * Uptime   = [4 bytes] big endian unsigned number, uptime
+ * Version  = [4 bytes] each byte represents a version number, e.g. 9.0.124.0
+ * ...
+ *
+ */
 
 static const uint32_t rtmpe8_keys[16][4] = {
     {0xbff034b2, 0x11d9081f, 0xccdfb795, 0x748de732},
@@ -328,8 +328,8 @@ static const uint32_t rtmpe8_keys[16][4] = {
 };
 
 /* RTMPE type 8 uses XTEA on the regular signature
-* http://en.wikipedia.org/wiki/XTEA
-*/
+ * http://en.wikipedia.org/wiki/XTEA
+ */
 static void rtmpe8_sig(uint8_t *in, uint8_t *out, int keyid)
 {
     unsigned int i, num_rounds = 32;
@@ -358,8 +358,8 @@ static void rtmpe8_sig(uint8_t *in, uint8_t *out, int keyid)
 }
 
 /* RTMPE type 9 uses Blowfish on the regular signature
-* http://en.wikipedia.org/wiki/Blowfish_(cipher)
-*/
+ * http://en.wikipedia.org/wiki/Blowfish_(cipher)
+ */
 #define BF_ROUNDS   16
 typedef struct bf_key {
     uint32_t s[4][256];

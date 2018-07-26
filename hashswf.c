@@ -410,8 +410,8 @@ make_unix_time(char *s)
 }
 
 /* Convert a Unix time to a network time string
-* Weekday, DD-MMM-YYYY HH:MM:SS GMT
-*/
+ * Weekday, DD-MMM-YYYY HH:MM:SS GMT
+ */
 static void
 strtime(time_t * t, char *s)
 {

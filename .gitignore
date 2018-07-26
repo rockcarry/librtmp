@@ -1,4 +1,5 @@
 !.gitignore
+obj/
 *.o
 *.a
 *.so

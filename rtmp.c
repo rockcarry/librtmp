@@ -28,6 +28,9 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#ifdef __linux__
+#include <fcntl.h>
+#endif
 
 #include "rtmp_sys.h"
 #include "log.h"
@@ -886,13 +889,18 @@ static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrl
     fd_set rfds;
     fd_set wfds;
 
+#ifdef __linux__
+    flag = fcntl(sock, F_GETFL, 0) | O_NONBLOCK;
+    fcntl(sock, F_SETFL, flag);
+#else
     flag = 1;
     if (ioctlsocket(sock, FIONBIO, &flag) != 0) {
         return -1;
     }
+#endif
 
     ret = connect(sock, addr, addrlen);
-    if (ret == SOCKET_ERROR) {
+    if (ret != 0) {
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
         FD_SET (sock, &rfds);
@@ -911,10 +919,15 @@ static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrl
         }
     }
 
+#ifdef __linux__
+    flag &= ~O_NONBLOCK;
+    fcntl(sock, F_SETFL, flag);
+#else
     flag = 0;
     if (ioctlsocket(sock, FIONBIO, &flag) != 0) {
         return -1;
     }
+#endif
 
     return ret;
 }
@@ -930,6 +943,7 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
     r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (r->m_sb.sb_socket != -1) {
         if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
+//      if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
             int err = GetSockError();
             RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
                 __FUNCTION__, err, strerror(err));
@@ -3481,7 +3495,7 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
     uint8_t hbuf[RTMP_MAX_HEADER_SIZE] = { 0 };
     char *header = (char *)hbuf;
     int nSize, hSize, nToRead, nChunk;
-    int didAlloc = FALSE;
+//  int didAlloc = FALSE;
     int extendedTimestamp;
 
     RTMP_Log(RTMP_LOGDEBUG2, "%s: fd=%d", __FUNCTION__, r->m_sb.sb_socket);
@@ -3593,7 +3607,7 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
             RTMP_Log(RTMP_LOGDEBUG, "%s, failed to allocate packet", __FUNCTION__);
             return FALSE;
         }
-        didAlloc = TRUE;
+//      didAlloc = TRUE;
         packet->m_headerType = (hbuf[0] & 0xc0) >> 6;
     }
 

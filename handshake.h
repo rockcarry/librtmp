@@ -914,7 +914,7 @@ HandShake(RTMP * r, int FP9HandShake)
         RTMP_LogHex(RTMP_LOGDEBUG, digestResp, SHA256_DIGEST_LENGTH);
 
 #ifdef FP10
-        if (type == 8 ) {
+        if (type == 8) {
             uint8_t *dptr = digestResp;
             uint8_t *sig = signatureResp;
             /* encrypt signatureResp */
@@ -1239,7 +1239,7 @@ SHandShake(RTMP * r)
         HMACsha256(clientsig, RTMP_SIG_SIZE - SHA256_DIGEST_LENGTH, digestResp,
             SHA256_DIGEST_LENGTH, signatureResp);
 #ifdef FP10
-        if (type == 8 ) {
+        if (type == 8) {
             uint8_t *dptr = digestResp;
             uint8_t *sig = signatureResp;
             /* encrypt signatureResp */
@@ -1302,7 +1302,7 @@ SHandShake(RTMP * r)
         HMACsha256(clientsig, RTMP_SIG_SIZE - SHA256_DIGEST_LENGTH, digest,
             SHA256_DIGEST_LENGTH, signature);
 #ifdef FP10
-        if (type == 8 ) {
+        if (type == 8) {
             uint8_t *dptr = digest;
             uint8_t *sig = signature;
             /* encrypt signatureResp */

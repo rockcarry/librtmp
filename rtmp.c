@@ -942,8 +942,8 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
 
     r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (r->m_sb.sb_socket != -1) {
-        if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
-//      if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
+//      if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
+        if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
             int err = GetSockError();
             RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
                 __FUNCTION__, err, strerror(err));

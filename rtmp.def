@@ -3,6 +3,7 @@ LIBRARY rtmp
 EXPORTS
     rtmp_push_init
     rtmp_push_exit
+    rtmp_push_conn
     rtmp_push_h264
     rtmp_push_alaw
     rtmp_push_aac

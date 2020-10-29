@@ -101,7 +101,7 @@ typedef struct {
     pthread_mutex_t lock;
 } RTMPPUSHER;
 
-static uint64_t get_time_stamp(void)
+static uint32_t get_time_stamp(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -162,6 +162,13 @@ void rtmp_push_exit(void *ctxt)
         pthread_mutex_destroy(&pusher->lock);
         free(pusher);
     }
+}
+
+int rtmp_push_conn(void *ctxt)
+{
+    RTMPPUSHER *pusher = (RTMPPUSHER*)ctxt;
+    if (!pusher) return -1;
+    return rtmp_tryconnect(pusher);
 }
 
 #define RTMP_HEAD_SIZE (sizeof(RTMPPacket) + RTMP_MAX_HEADER_SIZE)

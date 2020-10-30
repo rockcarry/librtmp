@@ -265,16 +265,10 @@ void rtmp_push_h264(void *ctxt, uint8_t *data, int len)
     int         spslen,  ppslen;
     int         newlen, key = 0;
     uint32_t    pts = get_time_stamp();
-
     if (!pusher) {
 //      printf("rtmp_push_h264 pusher is null !\n");
         return;
     }
-    if (rtmp_tryconnect(pusher) != 0) {
-//      printf("try connect failed !\n");
-        return;
-    }
-
     newlen = h264_parse_key_sps_pps(data, len, &key, &spsbuf, &spslen, &ppsbuf, &ppslen);
     if (key) send_sps_pps(pusher, spsbuf, spslen, ppsbuf, ppslen, pts);
     if (newlen) send_h264_data(pusher, data + (len - newlen), newlen, key, pts);
@@ -289,10 +283,6 @@ void rtmp_push_alaw(void *ctxt, uint8_t *data, int len)
 
     if (!pusher) {
 //      printf("rtmp_push_alaw pusher is null !\n");
-        return;
-    }
-    if (rtmp_tryconnect(pusher) != 0) {
-//      printf("try connect failed !\n");
         return;
     }
 
@@ -389,16 +379,10 @@ void rtmp_push_aac(void *ctxt, uint8_t *data, int len)
 {
     RTMPPUSHER *pusher = (RTMPPUSHER*)ctxt;
     uint32_t    pts = get_time_stamp();
-
     if (!pusher) {
 //      printf("rtmp_push_aac pusher is null !\n");
         return;
     }
-    if (rtmp_tryconnect(pusher) != 0) {
-//      printf("try connect failed !\n");
-        return;
-    }
-
     if ((pusher->acc_sync_counter++ & 0xF) == 0) {
         send_aac_dec_spec(pusher, pusher->aac_dec_spec);
     }

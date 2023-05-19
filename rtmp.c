@@ -1921,7 +1921,6 @@ SendFCUnpublish(RTMP *r)
 
 SAVC(publish);
 SAVC(live);
-SAVC(record);
 
 static int
 SendPublish(RTMP *r)
@@ -2891,27 +2890,20 @@ SAVC(_error);
 SAVC(close);
 SAVC(code);
 SAVC(level);
-SAVC(description);
 SAVC(onStatus);
 SAVC(playlist_ready);
 static const AVal av_NetStream_Failed = AVC("NetStream.Failed");
 static const AVal av_NetStream_Play_Failed = AVC("NetStream.Play.Failed");
-static const AVal av_NetStream_Play_StreamNotFound =
-AVC("NetStream.Play.StreamNotFound");
-static const AVal av_NetConnection_Connect_InvalidApp =
-AVC("NetConnection.Connect.InvalidApp");
+static const AVal av_NetStream_Play_StreamNotFound = AVC("NetStream.Play.StreamNotFound");
+static const AVal av_NetConnection_Connect_InvalidApp = AVC("NetConnection.Connect.InvalidApp");
 static const AVal av_NetStream_Play_Start = AVC("NetStream.Play.Start");
 static const AVal av_NetStream_Play_Complete = AVC("NetStream.Play.Complete");
 static const AVal av_NetStream_Play_Stop = AVC("NetStream.Play.Stop");
 static const AVal av_NetStream_Seek_Notify = AVC("NetStream.Seek.Notify");
 static const AVal av_NetStream_Pause_Notify = AVC("NetStream.Pause.Notify");
-static const AVal av_NetStream_Play_PublishNotify =
-AVC("NetStream.Play.PublishNotify");
-static const AVal av_NetStream_Play_UnpublishNotify =
-AVC("NetStream.Play.UnpublishNotify");
+static const AVal av_NetStream_Play_PublishNotify = AVC("NetStream.Play.PublishNotify");
+static const AVal av_NetStream_Play_UnpublishNotify = AVC("NetStream.Play.UnpublishNotify");
 static const AVal av_NetStream_Publish_Start = AVC("NetStream.Publish.Start");
-static const AVal av_NetConnection_Connect_Rejected =
-AVC("NetConnection.Connect.Rejected");
 
 /* Returns 0 for OK/Failed/error, 1 for 'Stop or Complete' */
 static int
@@ -4329,7 +4321,7 @@ static int
 HTTP_read(RTMP *r, int fill)
 {
     char *ptr;
-    int hlen;
+    long hlen;
 
 restart:
     if (fill) {
@@ -4360,7 +4352,10 @@ restart:
     if (!ptr) {
         return -1;
     }
-    hlen = atoi(ptr+16);
+    hlen = strtol(ptr+16, NULL, 10);
+    if (hlen < 1 || hlen > INT_MAX) {
+        return -1;
+    }
     ptr = strstr(ptr+16, "\r\n\r\n");
     if (!ptr) {
         return -1;

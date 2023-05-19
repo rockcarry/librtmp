@@ -1,6 +1,6 @@
 VERSION=v2.4
 
-prefix=/usr/local
+prefix?=/usr/local
 
 incdir=$(prefix)/include/librtmp
 bindir=$(prefix)/bin
@@ -16,8 +16,7 @@ LD=$(CROSS_COMPILE)ld
 AR=$(CROSS_COMPILE)ar
 
 SYS=posix
-#CRYPTO=OPENSSL
-#CRYPTO=GNUTLS
+CRYPTO?=OPENSSL # OPENSSL or GNUTLS
 DEF_POLARSSL=-DUSE_POLARSSL
 DEF_OPENSSL=-DUSE_OPENSSL
 DEF_GNUTLS=-DUSE_GNUTLS
@@ -64,7 +63,7 @@ INSTALL_IMPLIB_darwin=
 INSTALL_IMPLIB_mingw=cp librtmp.dll.a $(LIBDIR)
 INSTALL_IMPLIB=$(INSTALL_IMPLIB_$(SYS))
 
-SHARED=yes
+SHARED?=yes
 SODEF_yes=-fPIC
 SOLIB_yes=librtmp$(SO_EXT)
 SOINST_yes=install_so
@@ -89,7 +88,7 @@ librtmp.a: $(OBJS)
 	$(AR) rs $@ $?
 
 librtmp$(SO_EXT): $(OBJS)
-	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
+	$(CC) -o $@ $^ $(SO_LDFLAGS) $(LDFLAGS) $> $(CRYPTO_LIB)
 	ln -sf $@ librtmp.$(SOX)
 
 log.o: log.c log.h Makefile
@@ -108,13 +107,14 @@ librtmp.pc: librtmp.pc.in Makefile
 install:	install_base $(SO_INST)
 
 install_base:	librtmp.a librtmp.pc
-	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3 $(SODIR)
+	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3
 	cp amf.h http.h log.h rtmp.h $(INCDIR)
 	cp librtmp.a $(LIBDIR)
 	cp librtmp.pc $(LIBDIR)/pkgconfig
 	cp librtmp.3 $(MANDIR)/man3
 
 install_so:	librtmp$(SO_EXT)
+	-mkdir -p $(SODIR)
 	cp librtmp$(SO_EXT) $(SODIR)
 	$(INSTALL_IMPLIB)
 	cd $(SODIR); ln -sf librtmp$(SO_EXT) librtmp.$(SOX)

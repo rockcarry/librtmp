@@ -1,6 +1,9 @@
 !.gitignore
 obj/
+_install/
 *.o
 *.a
+*.pc
 *.so
+*.so.*
 *.dll

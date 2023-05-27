@@ -910,7 +910,7 @@ static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrl
         ret = select(sock+1, &rfds, &wfds, 0, &tm);
         if (ret > 0) {
             len = sizeof(err);
-            getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&err, &len);
+            getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&err, (socklen_t*)&len);
             ret = err == 0 ? 0 : -1;
         } else {
             RTMP_Log(RTMP_LOGERROR, "%s, connect socket %s !",

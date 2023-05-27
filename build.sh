@@ -18,10 +18,15 @@ mingw)
     cd -
     ;;
 linux)
-    make -j8 && make install
+    make install -j8
+    cd rtmppush
+    cp $DESTDIR/lib/librtmp.a .
+    ${CROSS_COMPILE}gcc -c -I$DESTDIR/include rtmppush.c
+    ${CROSS_COMPILE}ar rcs librtmppush.a rtmppush.o
+    cd -
     ;;
 clean|distclean)
     make clean
-    rm -rf $PWD/rtmppush/*.lib $PWD/rtmppush/*.dll $PWD/_install
+    rm -rf $PWD/rtmppush/*.o $PWD/rtmppush/*.lib $PWD/rtmppush/*.dll $PWD/_install
     ;;
 esac

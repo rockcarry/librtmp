@@ -10,14 +10,11 @@
 
 static int h264_parse_nalu_header(uint8_t *data, int len)
 {
-    int counter, i;
-    for (counter=0,i=0; i<len; i++) {
+    int  counter, i;
+    for (counter = 0, i = 0; i < len; i++) {
         if (data[i] == 0) counter++;
-        else if (counter >= 2 && data[i] == 0x01) {
-            return i;
-        } else {
-            counter = 0;
-        }
+        else if (counter >= 2 && data[i] == 0x01) return i;
+        else counter = 0;
     }
     return -1;
 }
@@ -129,7 +126,6 @@ static int rtmp_tryconnect(RTMPPUSHER *pusher)
         ret = -1; goto done;
     }
 done:
-    if (ret != 0) usleep(1000*1000);
     pthread_mutex_unlock(&pusher->lock);
     return ret;
 }
@@ -285,7 +281,6 @@ void rtmp_push_alaw(void *ctxt, uint8_t *data, int len)
 //      printf("rtmp_push_alaw pusher is null !\n");
         return;
     }
-
     if (pusher->len_alaw < RTMP_HEAD_SIZE + 1 + len) {
         pusher->len_alaw = RTMP_HEAD_SIZE + 1 + len;
         if (pusher->buf_alaw) free(pusher->buf_alaw);

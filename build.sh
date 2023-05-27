@@ -22,7 +22,7 @@ linux)
     cd rtmppush
     cp $DESTDIR/lib/librtmp.a .
     ${CROSS_COMPILE}gcc -c -I$DESTDIR/include rtmppush.c
-    ${CROSS_COMPILE}ar rcs librtmppush.a rtmppush.o
+    ${CROSS_COMPILE}ar rcs librtmp.a rtmppush.o
     cd -
     ;;
 clean|distclean)

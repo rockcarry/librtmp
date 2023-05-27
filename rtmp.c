@@ -28,6 +28,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <limits.h>
 #ifdef __linux__
 #include <fcntl.h>
 #endif

@@ -8,6 +8,15 @@
 #include "librtmp/log.h"
 #include "rtmppush.h"
 
+#define RTMP_TRY_CONNECT_TIMEOUT 2000
+
+static uint32_t get_tick_count(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+}
+
 static int h264_parse_nalu_header(uint8_t *data, int len)
 {
     int  counter, i;
@@ -95,23 +104,24 @@ typedef struct {
     uint8_t  aac_dec_spec[2];
     uint32_t acc_sync_counter;
     char     url[256];
+    uint32_t last_try_tick;
     pthread_mutex_t lock;
 } RTMPPUSHER;
 
-static uint32_t get_time_stamp(void)
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-
 static int rtmp_tryconnect(RTMPPUSHER *pusher)
 {
-    int ret = 0;
-    if (pusher->rtmp && RTMP_IsConnected(pusher->rtmp)) {
-        return 0;
-    }
+    uint32_t curtick;
+    int      ret = 0;
+
+    if (!pusher) return -1;
+    if (pusher->rtmp && RTMP_IsConnected(pusher->rtmp)) return 0;
+
+    curtick = get_tick_count();
+    if ((int32_t)curtick - (int32_t)pusher->last_try_tick < RTMP_TRY_CONNECT_TIMEOUT) return -1;
+
+//  printf("rtmp try connect ...\n");
     pthread_mutex_lock(&pusher->lock);
+    pusher->last_try_tick = curtick ? curtick : 1;
     if (!pusher->rtmp) pusher->rtmp = RTMP_Alloc();
     if (!pusher->rtmp) { ret = -1; goto done; }
     RTMP_Close(pusher->rtmp);
@@ -125,6 +135,7 @@ static int rtmp_tryconnect(RTMPPUSHER *pusher)
 //      printf("RTMP_Connect failed !\n");
         ret = -1; goto done;
     }
+//  printf("rtmp connect ok !\n");
 done:
     pthread_mutex_unlock(&pusher->lock);
     return ret;
@@ -158,13 +169,6 @@ void rtmp_push_exit(void *ctxt)
         pthread_mutex_destroy(&pusher->lock);
         free(pusher);
     }
-}
-
-int rtmp_push_conn(void *ctxt)
-{
-    RTMPPUSHER *pusher = (RTMPPUSHER*)ctxt;
-    if (!pusher) return -1;
-    return rtmp_tryconnect(pusher);
 }
 
 #define RTMP_HEAD_SIZE (sizeof(RTMPPacket) + RTMP_MAX_HEADER_SIZE)
@@ -260,11 +264,8 @@ void rtmp_push_h264(void *ctxt, uint8_t *data, int len)
     uint8_t    *spsbuf, *ppsbuf;
     int         spslen,  ppslen;
     int         newlen, key = 0;
-    uint32_t    pts = get_time_stamp();
-    if (!pusher) {
-//      printf("rtmp_push_h264 pusher is null !\n");
-        return;
-    }
+    uint32_t    pts = get_tick_count();
+    if (rtmp_tryconnect(pusher) != 0) return;
     newlen = h264_parse_key_sps_pps(data, len, &key, &spsbuf, &spslen, &ppsbuf, &ppslen);
     if (key) send_sps_pps(pusher, spsbuf, spslen, ppsbuf, ppslen, pts);
     if (newlen) send_h264_data(pusher, data + (len - newlen), newlen, key, pts);
@@ -275,9 +276,9 @@ void rtmp_push_alaw(void *ctxt, uint8_t *data, int len)
     RTMPPUSHER *pusher = (RTMPPUSHER*)ctxt;
     RTMPPacket *packet;
     char       *body  ;
-    uint32_t    pts = get_time_stamp();
+    uint32_t    pts = get_tick_count();
 
-    if (!pusher) {
+    if (!pusher || !pusher->rtmp || !RTMP_IsConnected(pusher->rtmp)) {
 //      printf("rtmp_push_alaw pusher is null !\n");
         return;
     }
@@ -373,8 +374,8 @@ static void send_aac_data(void *ctxt, uint8_t *data, int len, uint32_t pts)
 void rtmp_push_aac(void *ctxt, uint8_t *data, int len)
 {
     RTMPPUSHER *pusher = (RTMPPUSHER*)ctxt;
-    uint32_t    pts = get_time_stamp();
-    if (!pusher) {
+    uint32_t    pts = get_tick_count();
+    if (!pusher || !pusher->rtmp || !RTMP_IsConnected(pusher->rtmp)) {
 //      printf("rtmp_push_aac pusher is null !\n");
         return;
     }

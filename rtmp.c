@@ -350,7 +350,7 @@ RTMP_Init(RTMP *r)
     r->m_nServerBW      = 2500000;
     r->m_fAudioCodecs   = 3191.0;
     r->m_fVideoCodecs   = 252.0;
-    r->Link.timeout     = 30;
+    r->Link.timeout     = 1000;
     r->Link.swfAge      = 30;
 }
 
@@ -579,7 +579,7 @@ static struct urlopt {
     { AVC("start"),     OFF(Link.seekTime),      OPT_INT, 0, "Stream start position in milliseconds" },
     { AVC("stop"),      OFF(Link.stopTime),      OPT_INT, 0, "Stream stop position in milliseconds" },
     { AVC("buffer"),    OFF(m_nBufferMS),        OPT_INT, 0, "Buffer time in milliseconds" },
-    { AVC("timeout"),   OFF(Link.timeout),       OPT_INT, 0, "Session timeout in seconds" },
+    { AVC("timeout"),   OFF(Link.timeout),       OPT_INT, 0, "Session timeout in ms" },
     { AVC("pubUser"),   OFF(Link.pubUser),       OPT_STR, 0, "Publisher username" },
     { AVC("pubPasswd"), OFF(Link.pubPasswd),     OPT_STR, 0, "Publisher password" },
     { { NULL, 0 }, 0, 0 }
@@ -906,8 +906,8 @@ static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrl
         FD_ZERO(&wfds);
         FD_SET (sock, &rfds);
         FD_SET (sock, &wfds);
-        tm.tv_sec  = timeout;
-        tm.tv_usec = 0;
+        tm.tv_sec  = timeout / 1000;
+        tm.tv_usec = timeout % 1000 * 1000;
         ret = select(sock+1, &rfds, &wfds, 0, &tm);
         if (ret > 0) {
             len = sizeof(err);
@@ -943,8 +943,8 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
 
     r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (r->m_sb.sb_socket != -1) {
-//      if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
-        if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
+        if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
+//      if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
             int err = GetSockError();
             RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
                 __FUNCTION__, err, strerror(err));

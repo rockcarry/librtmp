@@ -350,7 +350,7 @@ RTMP_Init(RTMP *r)
     r->m_nServerBW      = 2500000;
     r->m_fAudioCodecs   = 3191.0;
     r->m_fVideoCodecs   = 252.0;
-    r->Link.timeout     = 1000;
+    r->Link.timeout     = 10;
     r->Link.swfAge      = 30;
 }
 
@@ -369,7 +369,7 @@ RTMP_GetDuration(RTMP *r)
 int
 RTMP_IsConnected(RTMP *r)
 {
-    return r->m_sb.sb_socket != -1;
+    return r->m_sb.sb_socket == -1 ? 0 : r->m_connected ? 2 : 1;
 }
 
 int
@@ -579,7 +579,7 @@ static struct urlopt {
     { AVC("start"),     OFF(Link.seekTime),      OPT_INT, 0, "Stream start position in milliseconds" },
     { AVC("stop"),      OFF(Link.stopTime),      OPT_INT, 0, "Stream stop position in milliseconds" },
     { AVC("buffer"),    OFF(m_nBufferMS),        OPT_INT, 0, "Buffer time in milliseconds" },
-    { AVC("timeout"),   OFF(Link.timeout),       OPT_INT, 0, "Session timeout in ms" },
+    { AVC("timeout"),   OFF(Link.timeout),       OPT_INT, 0, "Session timeout in seconds" },
     { AVC("pubUser"),   OFF(Link.pubUser),       OPT_STR, 0, "Publisher username" },
     { AVC("pubPasswd"), OFF(Link.pubPasswd),     OPT_STR, 0, "Publisher password" },
     { { NULL, 0 }, 0, 0 }
@@ -906,9 +906,9 @@ static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrl
         FD_ZERO(&wfds);
         FD_SET (sock, &rfds);
         FD_SET (sock, &wfds);
-        tm.tv_sec  = timeout / 1000;
-        tm.tv_usec = timeout % 1000 * 1000;
-        ret = select(sock+1, &rfds, &wfds, 0, &tm);
+        tm.tv_sec  = timeout;
+        tm.tv_usec = 0;
+        ret = select(sock + 1, &rfds, &wfds, 0, &tm);
         if (ret > 0) {
             len = sizeof(err);
             getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&err, (socklen_t*)&len);
@@ -945,9 +945,11 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
     if (r->m_sb.sb_socket != -1) {
         if (connect_with_timeout(r->m_sb.sb_socket, service, sizeof(struct sockaddr), r->Link.timeout) < 0) {
 //      if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0) {
+#ifdef DEBUG
             int err = GetSockError();
             RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
                 __FUNCTION__, err, strerror(err));
+#endif
             RTMP_Close(r);
             return FALSE;
         }
@@ -1043,6 +1045,7 @@ RTMP_Connect1(RTMP *r, RTMPPacket *cp)
         RTMP_Close(r);
         return FALSE;
     }
+    r->m_connected = 1;
     return TRUE;
 }
 
@@ -4052,6 +4055,7 @@ CloseInternal(RTMP *r, int reconnect)
     int i;
 
     if (RTMP_IsConnected(r)) {
+        r->m_connected = 0;
         if (r->m_stream_id > 0) {
             i = r->m_stream_id;
             r->m_stream_id = 0;

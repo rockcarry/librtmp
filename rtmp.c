@@ -901,7 +901,7 @@ static int connect_with_timeout(int sock, const struct sockaddr *addr, int addrl
 #endif
 
     ret = connect(sock, addr, addrlen);
-    if (ret != 0 && errno == EINPROGRESS) {
+    if (ret != 0 && (GetSockError() == EINPROGRESS || GetSockError() == EWOULDBLOCK)) {
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
         FD_SET (sock, &rfds);

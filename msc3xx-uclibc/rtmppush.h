@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// version: v1.0.1
+// version: v1.0.2
 
 #ifdef __cplusplus
 extern "C" {

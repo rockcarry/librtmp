@@ -102,7 +102,7 @@ typedef struct {
     char    *buf_aac ;
     int      len_aac ;
     uint8_t  aac_dec_spec[2];
-    uint32_t acc_sync_counter;
+    uint32_t aac_sync_counter;
     char     url[256];
     #define FLAG_EXIT (1 << 0)
     uint32_t flags;
@@ -384,7 +384,7 @@ void rtmp_push_aac(void *ctxt, uint8_t *data, int len)
     RTMPPUSHER *pusher = (RTMPPUSHER*)ctxt;
     uint32_t    pts = get_tick_count();
     if (!pusher || !pusher->rtmp || RTMP_IsConnected(pusher->rtmp) != 2) return;
-    if ((pusher->acc_sync_counter++ & 0xF) == 0) {
+    if ((pusher->aac_sync_counter++ & 0xF) == 0) {
         send_aac_dec_spec(pusher, pusher->aac_dec_spec);
     }
     send_aac_data(pusher, data, len, pts);
